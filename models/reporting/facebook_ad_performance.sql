@@ -6,7 +6,7 @@ SELECT
 campaign_name,
 campaign_id,
 campaign_effective_status,
-campaign_type_default,
+CASE WHEN campaign_name ~* 'Adv' THEN 'Campaign Type: Adv+' ELSE campaign_type_default END as campaign_type_default,
 adset_name,
 adset_id,
 adset_effective_status,
