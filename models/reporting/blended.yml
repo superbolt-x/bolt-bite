@@ -1,1 +1,18 @@
 version: 2
+
+sources:
+
+- name: reporting
+  schema: reporting
+  tables:
+    - name: facebook_ad_performance
+      identifier: bite_facebook_ad_performance
+
+    - name: googleads_campaign_performance
+      identifier: bite_googleads_campaign_performance
+  
+    - name: tiktok_ad_performance
+      identifier: bite_tiktok_ad_performance
+
+    - name: shopify_sales
+      identifier: bite_shopify_sales
