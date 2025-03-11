@@ -26,5 +26,5 @@ select
 from 
     (select * from spend_data
     union all
-    select * from paid_data)
+    select * from sho_data)
     
