@@ -17,7 +17,7 @@ with spend_data as
 sho_data as 
     (select 'Shopify' as channel, date, date_granularity, 0 as spend, 0 as paid_purchases,
         coalesce(sum(orders),0) as orders, coalesce(sum(subtotal_sales),0) as revenue, coalesce(sum(first_orders),0) as first_orders, coalesce(sum(first_order_subtotal_sales),0) as first_orders_revenue 
-    from {{ source('reporting', 'bite_shopify_sales') }}
+    from {{ source('reporting', 'shopify_sales') }}
     group by 1,2,3)
 
 select
