@@ -20,7 +20,6 @@ with spend_data as
         select 'TikTok' as channel, date, date_granularity, 
             coalesce(sum(spend),0) as spend, coalesce(sum(purchases),0) as paid_orders, coalesce(sum(clicks),0) as clicks, coalesce(sum(impressions),0) as impressions  
         from {{ source('reporting', 'tiktok_ad_performance') }} 
-        group by 1,2,3)
         group by 1,2,3
         union all
         select 'Bing' as channel, date, date_granularity, 
