@@ -16,3 +16,6 @@ sources:
 
     - name: shopify_sales
       identifier: bite_shopify_sales
+
+    - name: bingads_campaign_performance
+      identifier: bite_bingads_campaign_performance
