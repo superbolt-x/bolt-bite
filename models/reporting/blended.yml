@@ -25,3 +25,9 @@ sources:
   tables:
     - name: podcast_data
       identifier: podcast_data
+
+- name: shopify_base
+  schema: shopify_base
+  tables:
+    - name: shopify_orders
+      identifier: shopify_orders
