@@ -4,9 +4,14 @@
 
 {% set date_granularity_list = ['day', 'week', 'month', 'quarter', 'year'] %}
     
-with initial_podcast_data as
+with initial_podcast_spend_data as
     (SELECT *, {{ get_date_parts('date') }}
     FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    ),
+
+    initial_podcast_order_data as
+    (SELECT *, {{ get_date_parts('date') }}
+    FROM {{ source('shopify_base', 'shopify_orders') }} 
     ),
     
 spend_data as 
@@ -37,12 +42,12 @@ spend_data as
         union all
         select 'Podcast' as channel, '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
             coalesce(sum(spend),0) as spend, 0 as paid_orders, 0 as clicks, 0 as impressions
-        from {{ source('gsheet_raw', 'podcast_data') }} 
+        from initial_podcast_spend_data
         group by 1,2,3
         union all
         select 'Podcast' as channel, '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
             0 as spend, count(distinct order_id) as paid_orders, 0 as clicks, 0 as impressions
-        from {{ source('shopify_base', 'shopify_orders') }} 
+        from initial_podcast_order_data
         where discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
         group by 1,2,3
             {% if not loop.last %}UNION ALL
