@@ -1,35 +1,65 @@
 {{ config (
     alias = target.database + '_blended'
 )}}
-
-{% set date_granularity_list = ['day', 'week', 'month', 'quarter', 'year'] %}
     
-with initial_podcast_spend_data as
-    (SELECT *, {{ get_date_parts('date') }}
-    FROM
-        (SELECT date::date as date, coalesce(sum(spend),0) as spend FROM {{ source('gsheet_raw', 'podcast_data') }} group by 1)
-    ),
-
-initial_podcast_order_data as
-    (SELECT *, order_date::date as date, {{ get_date_parts('date') }}
-    FROM {{ source('shopify_base', 'shopify_orders') }} 
-    ),
-
-podcast_data as 
-    ({%- for date_granularity in date_granularity_list %}
-    select '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
-        coalesce(sum(spend),0) as spend, 0 as paid_orders
-    from initial_podcast_spend_data
-    group by 1,2
+with podcast_spend_data as
+    (SELECT DATE_TRUNC('day',date::date) as date, 'day' as date_granularity,
+        coalesce(sum(spend),0) as spend 
+    FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    GROUP BY 1,2
     UNION ALL
-    select '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
-        0 as spend, count(distinct order_id) as paid_orders
-    from initial_podcast_order_data
-    where discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
-    group by 1,2
-        {% if not loop.last %}UNION ALL
-        {% endif %}
-    {% endfor %}),
+    SELECT DATE_TRUNC('week',date::date) as date, 'week' as date_granularity,
+        coalesce(sum(spend),0) as spend 
+    FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    GROUP BY 1,2
+    UNION ALL
+    SELECT DATE_TRUNC('month',date::date) as date, 'month' as date_granularity,
+        coalesce(sum(spend),0) as spend 
+    FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    GROUP BY 1,2
+    UNION ALL
+    SELECT DATE_TRUNC('quarter',date::date) as date, 'quarter' as date_granularity,
+        coalesce(sum(spend),0) as spend 
+    FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    GROUP BY 1,2
+    UNION ALL
+    SELECT DATE_TRUNC('year',date::date) as date, 'year' as date_granularity,
+        coalesce(sum(spend),0) as spend 
+    FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    GROUP BY 1,2
+    ),
+
+podcast_order_data as
+    (SELECT DATE_TRUNC('day',order_date::date) as date, 'day' as date_granularity,
+        count(distinct order_id) as paid_orders
+    FROM {{ source('shopify_base', 'shopify_orders') }} 
+    WHERE discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
+    GROUP BY 1,2
+    UNION ALL
+    SELECT DATE_TRUNC('week',order_date::date) as date, 'week' as date_granularity,
+        count(distinct order_id) as paid_orders
+    FROM {{ source('shopify_base', 'shopify_orders') }} 
+    WHERE discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
+    GROUP BY 1,2
+    UNION ALL
+    SELECT DATE_TRUNC('month',order_date::date) as date, 'month' as date_granularity,
+        count(distinct order_id) as paid_orders
+    FROM {{ source('shopify_base', 'shopify_orders') }} 
+    WHERE discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
+    GROUP BY 1,2
+    UNION ALL
+    SELECT DATE_TRUNC('quarter',order_date::date) as date, 'quarter' as date_granularity,
+        count(distinct order_id) as paid_orders
+    FROM {{ source('shopify_base', 'shopify_orders') }} 
+    WHERE discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
+    GROUP BY 1,2
+    UNION ALL
+    SELECT DATE_TRUNC('year',order_date::date) as date, 'year' as date_granularity,
+        count(distinct order_id) as paid_orders
+    FROM {{ source('shopify_base', 'shopify_orders') }} 
+    WHERE discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
+    GROUP BY 1,2
+    ),
     
 paid_data as 
     (select channel, date, date_granularity, 
@@ -59,12 +89,12 @@ paid_data as
         union all
         select 'Podcast' as channel, date, date_granularity, 
             coalesce(sum(spend),0) as spend, 0 as paid_orders, 0 as clicks, 0 as impressions
-        from podcast_data
+        from podcast_spend_data
         group by 1,2,3
         union all
         select 'Podcast' as channel, date, date_granularity, 
             0 as spend, coalesce(sum(paid_orders),0) as paid_orders, 0 as clicks, 0 as impressions
-        from podcast_data
+        from podcast_order_data
         group by 1,2,3)
     group by 1,2,3),
 
