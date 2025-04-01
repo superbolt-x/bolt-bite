@@ -6,7 +6,8 @@
     
 with initial_podcast_spend_data as
     (SELECT *, {{ get_date_parts('date') }}
-    FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    FROM
+        (SELECT date::date as date, coalesce(sum(spend),0) as spend FROM {{ source('gsheet_raw', 'podcast_data') }} group by 1)
     ),
 
 initial_podcast_order_data as
