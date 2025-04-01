@@ -2,12 +2,46 @@
     alias = target.database + '_blended'
 )}}
 
-with spend_data as 
+{% set date_granularity_list = ['day', 'week', 'month', 'quarter', 'year'] %}
+    
+with initial_podcast_spend_data as
+    (SELECT *, {{ get_date_parts('date') }}
+    FROM {{ source('gsheet_raw', 'podcast_spend') }} 
+    ),
+
+initial_podcast_order_data as
+    (SELECT *, order_date::date as date, {{ get_date_parts('date') }}
+    FROM {{ source('shopify_base', 'shopify_orders') }} 
+    ),
+
+podcast_spend_data as 
+    ({%- for date_granularity in date_granularity_list %}
+    select '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
+        coalesce(sum(spend),0) as spend
+    from initial_podcast_spend_data
+    group by 1,2
+        {% if not loop.last %}UNION ALL
+        {% endif %}
+    {% endfor %}),
+
+podcast_order_data as 
+    ({%- for date_granularity in date_granularity_list %}
+    select '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
+        count(distinct order_id) as paid_orders
+    from initial_podcast_order_data
+    where discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
+    group by 1,2
+        {% if not loop.last %}UNION ALL
+        {% endif %}
+    {% endfor %}),
+    
+paid_data as 
     (select channel, date, date_granularity, 
         coalesce(sum(spend),0) as spend, coalesce(sum(paid_orders),0) as paid_orders, coalesce(sum(clicks),0) as clicks, coalesce(sum(impressions),0) as impressions,
         0 as orders, 0 as revenue, 0 as first_orders, 0 as first_orders_revenue
     from 
-        (select 'Meta' as channel, date, date_granularity, 
+        (
+        select 'Meta' as channel, date, date_granularity, 
             coalesce(sum(spend),0) as spend, coalesce(sum(purchases),0) as paid_orders, coalesce(sum(link_clicks),0) as clicks, coalesce(sum(impressions),0) as impressions  
         from {{ source('reporting', 'facebook_ad_performance') }} 
         group by 1,2,3
@@ -25,7 +59,20 @@ with spend_data as
         select 'Bing' as channel, date, date_granularity, 
             coalesce(sum(spend),0) as spend, coalesce(sum(purchases),0) as paid_orders, coalesce(sum(clicks),0) as clicks, coalesce(sum(impressions),0) as impressions  
         from {{ source('reporting', 'bingads_campaign_performance') }} 
-        group by 1,2,3)
+        group by 1,2,3
+        union all
+        select 'Podcast' as channel, date, date_granularity, 
+            coalesce(sum(spend),0) as spend, 0 as paid_orders, 0 as clicks, 0 as impressions
+        from podcast_spend_data
+        group by 1,2,3
+        union all
+        select 'Podcast' as channel, date, date_granularity, 
+            0 as spend, coalesce(sum(paid_orders),0) as paid_orders, 0 as clicks, 0 as impressions
+        from podcast_order_data
+        group by 1,2,3
+            {% if not loop.last %}UNION ALL
+            {% endif %}
+        {% endfor %})
     group by 1,2,3),
 
 sho_data as 
@@ -38,7 +85,7 @@ select
     channel, date, date_granularity,
     spend, paid_orders, clicks, impressions, orders, revenue, first_orders, first_orders_revenue
 from 
-    (select * from spend_data
+    (select * from paid_data
     union all
     select * from sho_data)
     
