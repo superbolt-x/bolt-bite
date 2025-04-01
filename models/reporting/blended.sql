@@ -69,10 +69,7 @@ paid_data as
         select 'Podcast' as channel, date, date_granularity, 
             0 as spend, coalesce(sum(paid_orders),0) as paid_orders, 0 as clicks, 0 as impressions
         from podcast_order_data
-        group by 1,2,3
-            {% if not loop.last %}UNION ALL
-            {% endif %}
-        {% endfor %})
+        group by 1,2,3)
     group by 1,2,3),
 
 sho_data as 
