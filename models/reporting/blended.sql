@@ -6,7 +6,7 @@
     
 with initial_podcast_spend_data as
     (SELECT *, {{ get_date_parts('date') }}
-    FROM {{ source('gsheet_raw', 'podcast_spend') }} 
+    FROM {{ source('gsheet_raw', 'podcast_data') }} 
     ),
 
 initial_podcast_order_data as
