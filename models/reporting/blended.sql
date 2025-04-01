@@ -14,20 +14,15 @@ initial_podcast_order_data as
     FROM {{ source('shopify_base', 'shopify_orders') }} 
     ),
 
-podcast_spend_data as 
+podcast_data as 
     ({%- for date_granularity in date_granularity_list %}
     select '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
-        coalesce(sum(spend),0) as spend
+        coalesce(sum(spend),0) as spend, 0 as paid_orders
     from initial_podcast_spend_data
     group by 1,2
-        {% if not loop.last %}UNION ALL
-        {% endif %}
-    {% endfor %}),
-
-podcast_order_data as 
-    ({%- for date_granularity in date_granularity_list %}
+    UNION ALL
     select '{{date_granularity}}' as date_granularity, {{date_granularity}} as date,
-        count(distinct order_id) as paid_orders
+        0 as spend, count(distinct order_id) as paid_orders
     from initial_podcast_order_data
     where discount_code IN ('DIGEST','DARIN20','MAGNETIC','HEAL','GUNDRY','GENIUS','BALANCEDLES','DARIN','REALPOD','DRLYON','POW')
     group by 1,2
@@ -63,12 +58,12 @@ paid_data as
         union all
         select 'Podcast' as channel, date, date_granularity, 
             coalesce(sum(spend),0) as spend, 0 as paid_orders, 0 as clicks, 0 as impressions
-        from podcast_spend_data
+        from podcast_data
         group by 1,2,3
         union all
         select 'Podcast' as channel, date, date_granularity, 
             0 as spend, coalesce(sum(paid_orders),0) as paid_orders, 0 as clicks, 0 as impressions
-        from podcast_order_data
+        from podcast_data
         group by 1,2,3)
     group by 1,2,3),
 
