@@ -6,11 +6,11 @@
     
 with initial_podcast_spend_data as
     (SELECT *, {{ get_date_parts('date') }}
-    FROM {{ source('gsheet_raw', 'podcast_data') }} 
+    FROM {{ source('gsheet_raw', 'podcast_spend') }} 
     ),
 
     initial_podcast_order_data as
-    (SELECT *, {{ get_date_parts('date') }}
+    (SELECT *, order_date::date as date, {{ get_date_parts('date') }}
     FROM {{ source('shopify_base', 'shopify_orders') }} 
     ),
     
