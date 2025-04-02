@@ -111,4 +111,4 @@ from
     (select * from paid_data
     union all
     select * from sho_data)
-    
+where date <= current_date
