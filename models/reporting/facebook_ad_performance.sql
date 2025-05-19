@@ -25,5 +25,6 @@ impressions,
 link_clicks,
 add_to_cart,
 purchases,
-revenue
+revenue,
+video_view as video_views
 FROM {{ ref('facebook_performance_by_ad') }}
