@@ -16,5 +16,6 @@ link_clicks,
 add_to_cart,
 initiate_checkout,
 purchases,
-revenue
+revenue,
+video_view as video_views
 FROM {{ ref('facebook_performance_by_campaign') }}
