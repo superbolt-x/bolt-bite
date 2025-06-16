@@ -27,5 +27,5 @@ add_to_cart,
 purchases,
 revenue,
 video_view as video_views,
-onsite_app_view_content as view_content
+onsite_web_view_content as view_content
 FROM {{ ref('facebook_performance_by_ad') }}
