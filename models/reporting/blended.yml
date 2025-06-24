@@ -26,6 +26,9 @@ sources:
     - name: podcast_data
       identifier: podcast_data
 
+    - name: tiktok_gmv_insights
+      identifier: tiktok_gmv_insights
+
 - name: shopify_base
   schema: shopify_base
   tables:
