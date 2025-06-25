@@ -26,8 +26,8 @@ with tiktok_data as (
     select 
         campaign_name,
         campaign_id,
-        '(not set)' as campaign_status,
-        '(not set)' as campaign_type_default,
+        null as campaign_status,
+        null as campaign_type_default,
         date_trunc('{{ granularity }}', date) as date,
         '{{ granularity }}' as date_granularity,
         sum(spend) as spend,
