@@ -23,8 +23,8 @@ with tiktok_data as (
         cost as spend,
         impressions,
         clicks,
-        conversions as purchases,
-        complete_payment_rate as revenue,
+        complete_payment as purchases,
+        total_complete_payment_rate as revenue,
         web_add_to_cart_events as atc
         FROM {{ ref('tiktok_performance_by_ad') }}
     )
