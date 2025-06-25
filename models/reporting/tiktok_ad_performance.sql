@@ -49,7 +49,6 @@ with tiktok_data as (
         sum(spend) as spend,
         sum(0) as impressions,
         sum(0) as clicks,
-        sum(0) as video_views,
         sum(purchases) as purchases,
         sum(revenue) as revenue,
         sum(0) as atc
